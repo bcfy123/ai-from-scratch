@@ -24,3 +24,14 @@ def bytes_to_unicode():
     # 放对应的字符
     cs = [chr(n) for n in cs]
     return dict(zip(bs, cs))
+
+def get_pairs(word):
+    """
+    提取word中所有相邻的token加入到集合
+    """
+    pairs = set()
+    prev_char = word[0]
+    for char in word[1:]:
+        pairs.add((prev_char, char))
+        prev_char = char
+    return pairs
