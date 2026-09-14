@@ -9,7 +9,6 @@ embedding_size = 10
 dtype = torch.float32
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 class Skip_gram(nn.Module):
     def __init__(self):
         super(Skip_gram, self).__init__()
