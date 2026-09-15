@@ -2,3 +2,6 @@ __pycache__/
 .vscode/
 *.model
 *.vocab
+*.pkl
+*.txt
+*.bin

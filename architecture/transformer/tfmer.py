@@ -176,7 +176,7 @@ class Encoder(nn.Module):
 
     def forward(self, x, src_mask=None):
         x = self.token_embedding(x)
-
+        # x.size(1) 就是 seq_len
         x = x + self.pe[:, :x.size(1)]
 
         x = self.dropout(x)
