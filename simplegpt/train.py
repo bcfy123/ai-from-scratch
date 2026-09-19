@@ -60,3 +60,40 @@ def get_batch(split):
 
     # 训练循环随后调用 model(x, y)：模型据此计算预测和交叉熵损失。
     return x, y
+
+# 尝试从数据集的 meta.pkl 得到词表大小。
+# 对 Shakespeare 字符级数据，它由 prepare.py 写入，值为 65；这意味着
+# 模型每个位置最终都必须给 65 个字符各输出一个分数（logit）。
+meta_path = os.path.join(data_dir, 'meta.pkl')
+meta_vocab_size = None
+if os.path.exists(meta_path):
+    with open(meta_path, 'rb') as f:
+        meta = pickle.load(f)
+    meta_vocab_size = meta['vocab_size']
+    print(f"found vocab_size = {meta_vocab_size} (inside {meta_path})")
+
+# 此处还没有创建任何神经网络层或参数，model_args 只是一个普通 Python 字典。
+model_args = dict(n_layer=n_layer, n_head=n_head, n_embd=n_embd, block_size=block_size,
+                  bias=bias, vocab_size=None, dropout=dropout)
+
+# init_from 决定从哪里得到模型参数：
+#   scratch：随机初始化，从头训练
+if init_from == 'scrath':
+    print("Initializing a new model from scratch")
+    if meta_vocab_size is None:
+        print("defaulting to vocab_size of GPT-2 to 50304 (50257 rounded up for efficiency)")
+    model_args['vocab_size'] = meta_vocab_size if meta_vocab_size is not None else 50304
+
+    # GPTConfig 是 dataclass 形式的“图纸”；GPT(gptconf) 才会真正创建
+    # Embedding、多个 Transformer Block 和输出层。具体结构下一步会在 model.py 阅读。
+    gptconf = GPTConfig(**model_args)
+    model = GPT(gptconf)
+
+# 预训练 GPT-2 原本支持的上下文可能比当前任务需要得长。
+# 若当前 block_size 更小，就裁剪位置嵌入和注意力掩码以节约显存；只能缩短，不能扩大。
+if block_size < model.config.block_size:
+    model.crop_block_size(block_size)
+    model_args['block_size'] = block_size # so that the checkpoint will have the right value
+
+# 将模型的全部参数移动到与 x、y 相同的设备（CPU、GPU 或 MPS）。
+model.to(device)
