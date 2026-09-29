@@ -144,3 +144,42 @@ void fill_in_parameter_sizes(size_t* param_sizes, GPT2Config config) {
   param_sizes[14] = C; // lnfw
   param_sizes[15] = C; // lnfb
 }
+
+typedef struct {
+  GPT2Config config;
+  // the weights (parameters) of the model, and their sizes
+  ParameterTensors params;
+  size_t param_sizes[NUM_PARAMETER_TENSORS];
+  float* params_memory;
+  size_t num_parameters;
+  // gradients of the weights
+  ParameterTensors grads;
+  float* grads_memory;
+  // buffers for the AdamW optimizer
+  float* m_memory;
+  float* v_memory;
+  // the activations of the model, and their sizes
+  ActivationTensors acts;
+  size_t act_sizes[NUM_ACTIVATION_TENSORS];
+  float* acts_memory;
+  size_t num_activations;
+  // gradients of the activations
+  ActivationTensors grads_acts;
+  float* grads_acts_memory;
+  // other run state configuration
+  int batch_size; // the batch size (B) of current forward pass
+  int seq_len; // the sequence length (T) of current forward pass
+  int* inputs; // the input tokens for the current forward pass
+  int* targets; // the target tokens for the current forward pass
+  float mean_loss; // after a forward pass with targets, will be populated with the mean loss
+} GPT2;
+
+#ifndef TESTING
+// if we are TESTING (see test_gpt2.c), we'll skip the int main below
+
+// main training loop
+int main() {
+
+  // build the GPT-2 model from a checkpoint
+  GPT2 model;
+  gpt2_build_from_checkpoint(&model, "gpt2_124M.bin");
